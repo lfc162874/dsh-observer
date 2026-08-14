@@ -1,5 +1,7 @@
 # Initial Observer architecture
 
+English | [中文](2026-08-14-initial-observer-architecture.zh.md)
+
 Status: implemented
 
 ## Problem

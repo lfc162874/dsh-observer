@@ -1,5 +1,7 @@
 # Shell result semantics
 
+English | [中文](2026-08-14-shell-result-semantics.zh.md)
+
 Status: implemented
 
 ## Problem

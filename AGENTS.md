@@ -1,5 +1,7 @@
 # AGENTS.md
 
+English | [中文](AGENTS.zh.md)
+
 `dsh-observer` is an out-of-tree DeepSeek Harness bundle. It adds evidence-based diagnostics without modifying the agent loop.
 
 ## Architecture

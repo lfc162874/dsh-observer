@@ -1,5 +1,7 @@
 # dsh-observer
 
+English | [中文](README.zh.md)
+
 Evidence-based execution diagnostics for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). The plugin derives replayable findings from the durable Session log and adds a **Diagnostics** view beside Chat and Trajectory.
 
 The initial rules intentionally make narrow claims:
