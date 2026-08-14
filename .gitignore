@@ -1,0 +1,7 @@
+lib/
+node_modules/
+coverage/
+.pack/
+*.tsbuildinfo
+.DS_Store
+.idea/

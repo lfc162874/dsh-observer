@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src/index.ts",
+    "src/invariant.ts",
+    "src/fingerprint.ts",
+    "src/projection.ts",
+    "src/types.ts",
+    "tests/projection.spec.ts"
+  ]
+}
