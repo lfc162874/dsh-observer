@@ -165,7 +165,7 @@ function advanceRun(
   toolName: string,
   latest: PatternRun['latest'],
 ): PatternRun {
-  if (previous === null || previous.fingerprint !== fingerprint) {
+  if (previous === null || previous.fingerprint !== fingerprint || previous.toolName !== toolName) {
     return {
       fingerprint,
       toolName,
@@ -282,11 +282,11 @@ export function createObserverDiagnosticsProjection(
           const pending = Object.hasOwn(next.pendingCalls, callId)
             ? next.pendingCalls[callId]
             : undefined
-          const fingerprint = toolErrorFingerprint(event.data.message.content[0], event.data.error)
+          const toolName = pending?.toolName ?? 'unknown'
+          const fingerprint = toolErrorFingerprint(toolName, event.data.message.content[0], event.data.error)
           if (fingerprint === null) {
             return { ...next, pendingCalls: withoutPending(next.pendingCalls, callId) }
           }
-          const toolName = pending?.toolName ?? 'unknown'
           const advanced = advanceRun(next.errorRun, fingerprint, toolName, point(event))
           const diagnosed = diagnoseRun(
             next.issues,
@@ -311,6 +311,6 @@ export function createObserverDiagnosticsProjection(
       }
     },
     view: state => ({ summary: state.summary, issues: state.issues }),
-    stateVersion: 1,
+    stateVersion: 2,
   }
 }

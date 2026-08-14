@@ -4,8 +4,8 @@ Evidence-based execution diagnostics for [DeepSeek Harness](https://github.com/d
 
 The initial rules intentionally make narrow claims:
 
-- repeated consecutive Tool calls with identical canonical arguments;
-- repeated Tool failures with the same normalized error evidence;
+- repeated consecutive Tool calls with identical canonical execution arguments; Bash/Pwsh `description` text is excluded because Harness documents it as presentation-only;
+- repeated Tool failures with the same normalized error evidence, including structured Tool errors and the stable non-zero/signal markers emitted by Harness Bash/Pwsh tools;
 - whole-session counts for Turns, Steps, model calls, Tool calls, failures, retries, and provider-reported tokens.
 
 Every finding carries its source event range. Time and token values describe observed work; the plugin does not label them as proven waste or claim a semantic root cause.
@@ -87,6 +87,6 @@ None. Observer does not assemble or send provider requests.
 ## Known Limitations and Deferred Work
 
 - The first loop rule covers exact consecutive calls. Cyclic `A → B → A → B` and result-similarity analysis are deferred until labelled fixtures define acceptable false-positive rates.
-- Repeated-error matching removes ANSI control sequences and normalizes whitespace but otherwise remains exact. It deliberately does not erase paths, line numbers, or domain-specific identifiers.
+- Repeated-error matching removes ANSI control sequences and normalizes whitespace but otherwise remains exact. Shell exit status uses the public `@deepseek-ai/dsh-shell` parser; the rule deliberately does not erase paths, line numbers, or domain-specific identifiers.
 - Diagnostics-to-Trajectory navigation is deferred because the current Trajectory view has no public event-sequence anchor protocol.
 - Projection payloads are capped by `maxIssues`; older findings fall out of the view while aggregate counts remain whole-session values.

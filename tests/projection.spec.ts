@@ -97,6 +97,21 @@ describe('observerDiagnostics projection', () => {
     })])
   })
 
+  it('ignores shell descriptions that do not affect execution identity', () => {
+    const projection = fold([
+      at(0, 0, 'turn/start', { turn: 1 }),
+      call(1, 10, 'c1', 'bash', '{"command":"pnpm build","description":"first attempt"}'),
+      call(2, 20, 'c2', 'bash', '{"description":"second attempt","command":"pnpm build"}'),
+      call(3, 30, 'c3', 'bash', '{"command":"pnpm build","description":"check again"}'),
+    ])
+
+    expect(projection.issues).toEqual([expect.objectContaining({
+      ruleId: 'repeat-tool-call',
+      toolName: 'bash',
+      metrics: { occurrences: 3, elapsedMs: 20 },
+    })])
+  })
+
   it('resets exact-call detection after a different tracked call and at a new Turn', () => {
     const projection = fold([
       at(0, 0, 'turn/start', { turn: 1 }),
@@ -139,6 +154,35 @@ describe('observerDiagnostics projection', () => {
       },
       metrics: { occurrences: 2, elapsedMs: 450 },
     })])
+  })
+
+  it('classifies repeated non-zero shell exits from the stable result marker', () => {
+    const projection = fold([
+      at(0, 0, 'turn/start', { turn: 1 }),
+      call(1, 100, 'bash-1', 'bash', '{"command":"exit 7","description":"first"}'),
+      result(2, 150, 'bash-1', '[stderr]\nobserver-smoke-error\n[exit code: 7]', false),
+      call(3, 200, 'bash-2', 'bash', '{"command":"exit 7","description":"second"}'),
+      result(4, 250, 'bash-2', '[stderr]\nobserver-smoke-error\n[exit code: 7]', false),
+    ])
+
+    expect(projection.summary.failedToolCalls).toBe(2)
+    expect(projection.issues).toEqual([expect.objectContaining({
+      id: 'repeated-tool-error:2',
+      ruleId: 'repeated-tool-error',
+      toolName: 'bash',
+      metrics: { occurrences: 2, elapsedMs: 100 },
+    })])
+  })
+
+  it('does not treat marker-like successful shell output as a failure', () => {
+    const projection = fold([
+      at(0, 0, 'turn/start', { turn: 1 }),
+      call(1, 10, 'bash-1', 'bash', '{"command":"printf marker","description":"print"}'),
+      result(2, 20, 'bash-1', '[exit code: 7]', false),
+    ])
+
+    expect(projection.summary.failedToolCalls).toBe(0)
+    expect(projection.issues).toEqual([])
   })
 
   it('counts durable lifecycle, retry, and token facts without counting malformed negative usage', () => {

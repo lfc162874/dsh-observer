@@ -2,6 +2,7 @@
 
 import { createHash } from 'node:crypto'
 import type { ContentBlock, ToolResultBlock } from '@deepseek-ai/dsh-llm/types'
+import { parseExitStatus } from '@deepseek-ai/dsh-shell'
 
 const ANSI_PATTERN = new RegExp(`${String.fromCodePoint(0x1b)}\\[[0-?]*[ -/]*[@-~]`, 'g')
 
@@ -15,7 +16,17 @@ function normalizedJson(value: unknown): unknown {
   )
 }
 
-function canonicalArguments(raw: string): string {
+function executionArguments(toolName: string, value: unknown): unknown {
+  if ((toolName !== 'bash' && toolName !== 'pwsh')
+    || typeof value !== 'object'
+    || value === null
+    || Array.isArray(value)) return value
+  const execution = { ...value as Record<string, unknown> }
+  delete execution.description
+  return execution
+}
+
+function canonicalArguments(toolName: string, raw: string): string {
   let parsed: unknown
   try {
     parsed = JSON.parse(raw)
@@ -24,7 +35,7 @@ function canonicalArguments(raw: string): string {
     // bytes are the only stable identity available.
     return raw
   }
-  return JSON.stringify(normalizedJson(parsed)) ?? raw
+  return JSON.stringify(normalizedJson(executionArguments(toolName, parsed))) ?? raw
 }
 
 function digest(value: string): string {
@@ -38,7 +49,7 @@ function digest(value: string): string {
  * @returns Stable SHA-256 fingerprint.
  */
 export function toolCallFingerprint(name: string, rawArguments: string): string {
-  return digest(`${name}\u0000${canonicalArguments(rawArguments)}`)
+  return digest(`${name}\u0000${canonicalArguments(name, rawArguments)}`)
 }
 
 function contentText(block: ContentBlock): string {
@@ -57,20 +68,34 @@ function contentText(block: ContentBlock): string {
   }
 }
 
+function shellFailureIdentity(toolName: string, rendered: string): string | null {
+  if (toolName !== 'bash' && toolName !== 'pwsh') return null
+  const status = parseExitStatus(rendered)
+  if ('signal' in status) return `signal:${status.signal}`
+  return status.exitCode === 0 ? null : `exit:${String(status.exitCode)}`
+}
+
 /**
  * Identify exact normalized failure evidence.
+ * @param toolName - Tool name correlated from the durable call event.
  * @param result - Durable Tool result block.
  * @param internalError - Optional internal failure identity recorded beside the result.
  * @returns Stable fingerprint, or null for a successful result.
  */
 export function toolErrorFingerprint(
+  toolName: string,
   result: ToolResultBlock,
   internalError: { name: string; code: string } | undefined,
 ): string | null {
-  if (result.isError !== true && internalError === undefined) return null
   const rendered = result.content.map(contentText).join('\n')
-  const identity = internalError === undefined ? '' : `${internalError.name}:${internalError.code}`
-  const normalized = `${identity}\n${rendered}`
+  const shellFailure = shellFailureIdentity(toolName, rendered)
+  if (result.isError !== true && internalError === undefined && shellFailure === null) return null
+  const identity = [
+    result.isError === true ? 'tool-result:isError' : '',
+    internalError === undefined ? '' : `${internalError.name}:${internalError.code}`,
+    shellFailure ?? '',
+  ].filter(value => value.length > 0).join('|')
+  const normalized = `${toolName}\n${identity}\n${rendered}`
     .replace(ANSI_PATTERN, '')
     .replace(/\s+/g, ' ')
     .trim()

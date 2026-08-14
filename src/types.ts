@@ -66,6 +66,7 @@ export interface ObserverSummary {
   steps: number
   modelCalls: number
   toolCalls: number
+  /** Structured Tool errors and recognized non-zero or signalled shell results. */
   failedToolCalls: number
   retries: number
   inputTokens: number
