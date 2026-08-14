@@ -27,7 +27,6 @@ export default defineConfig([
     name: PACKAGE_ID,
     entry: {
       index: 'src/index.ts',
-      invariant: 'src/invariant.ts',
       types: 'src/types.ts',
     },
     outDir: 'lib',

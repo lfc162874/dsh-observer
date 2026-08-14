@@ -5,6 +5,3 @@
         repeatCallThreshold: 3
         repeatedErrorThreshold: 2
         maxIssues: 50
-
-    - id: observer-invariant
-      name: dsh-observer/invariant

@@ -8,10 +8,10 @@
   },
   "include": [
     "src/index.ts",
-    "src/invariant.ts",
     "src/fingerprint.ts",
     "src/projection.ts",
     "src/types.ts",
+    "tests/bundle.spec.ts",
     "tests/projection.spec.ts"
   ]
 }
